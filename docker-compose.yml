@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - .dbdata:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "test"
+      MYSQL_USER: "admin"
+      MYSQL_DATABASE: "student" 
+      MYSQL_PASSWORD: "test"
+    ports: 
+      - "3306:3306"
+    networks:
+      - flask_api
+    healthcheck:
+            test: ["CMD", "mysqladmin", "-u$MYSQL_USER", "-p$MYSQL_PASSWORD", "ping", "-h", "localhost"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+
+  backend:
+    image: 0xforx/docker-workshop:latest
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_APP: "api.py"
+      FLASK_ENVIRONMENT: "development"
+      DB_USERNAME: "admin"
+      DB_PASSWORD: "test"
+      DB_HOSTNAME: "db"
+      DB_NAME: "student" 
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - flask_api
+
+volumes:
+  db: {}
+
+networks:
+  flask_api:
+    name: apishka
+
+
